@@ -212,6 +212,9 @@ public class ChronoService extends Service {
     }
 
     private void stopChrono(){
+        if(!running)
+            startTime = SystemClock.elapsedRealtime() - pauseTime;
+
         int minPassed = (int)((SystemClock.elapsedRealtime() - startTime)/60000);
 
         if(minPassed > 0)

@@ -216,6 +216,9 @@ public class SettingsActivity extends AppCompatActivity {
                             pref.setSummary(val);
                         }
                     }else{
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putInt("auto_start_min", 0);
+                        editor.apply();
                         pref.setSummary("");
                     }
 
