@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">TimerApp</string>
+    <string name="btn_start">Start</string>
+    <string name="btn_pause">Pause</string>
+    <string name="btn_stop">Stop</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_history">History</string>
+    <string name="title_activity_detail">Detail</string>
+    <string name="btn_view">View</string>
+
+    <!-- Preference -->
+    <string name="messages_header">Timer</string>
+    <string name="messages_DB">Data</string>
+
+    <string name="title_timeout">Auto resume after (in minutes)</string>
+
+    <string name="title_delete_db">Clean Database</string>
+    <string name="delete_db_summary">Remove all stored data on the app</string>
+    <string name="delete_db_key">DeleteDBKey</string>
+
+    <string name="title_fill_dp">Fill Database</string>
+    <string name="fill_dp_summary">Generates random data to test out app</string>
+    <string name="fill_db_key">FillDPKey</string>
+
+
+</resources>
