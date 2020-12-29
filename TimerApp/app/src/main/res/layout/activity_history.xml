@@ -8,15 +8,14 @@
 
     <include
         android:id="@+id/my_toolbar"
-        layout="@layout/toolbar" />
+        layout="@layout/toolbar"
+        app:layout_collapseMode="pin" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/dayView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+    <fragment
+        android:id="@+id/mainFrameHistory"
+        android:name="com.example.timerapp.HistoryFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/my_toolbar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,14 +1,15 @@
 package com.example.timerapp;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.AsyncTask;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,21 +18,21 @@ import android.widget.Chronometer;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
-import java.util.Random;
+import java.util.Date;
+
+import static com.example.timerapp.HistoryActivity.mMasterDetail;
+import static com.example.timerapp.TimingContract.TimingEntry.COLUMN_NAME_DATE;
+import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
 
 
 public class MainActivity extends AppCompatActivity {
-    private RecyclerView.Adapter mAdapter;
-
-    AppDatabase mDb;
-    TimingDao timingDao;
-
     private Chronometer chronometer;
     private Button toggle_btn;
     private boolean running;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mMasterDetail = true;
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar myToolbar = findViewById(R.id.my_toolbar);
@@ -48,20 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
         chronometer = findViewById(R.id.chronometer);
         toggle_btn = findViewById(R.id.toggle_btn);
-
-        RecyclerView recyclerView = findViewById(R.id.detailView);
-        recyclerView.setHasFixedSize(true);
-
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-
-        mDb = (AppDatabase) AppDatabase.getDatabase(getApplicationContext());
-        timingDao = mDb.userDao();
-
         chronoServiceReceiver = new ChronoMeterReceiver();
-
-        mAdapter = new DetailAdaptor();
-        recyclerView.setAdapter(mAdapter);
 
         Calendar today = Calendar.getInstance();
         today.set(Calendar.HOUR_OF_DAY, 0);
@@ -69,13 +59,14 @@ public class MainActivity extends AppCompatActivity {
         today.set(Calendar.SECOND, 0);
         today.set(Calendar.MILLISECOND, 0);
 
-        timingDao.findByDate(today.getTime()).observe(this, new Observer<List<Timing>>() {
-            @Override
-            public void onChanged(@Nullable List<Timing> timings) {
-            ((DetailAdaptor)mAdapter).setDataset(timings);
-            }
-        });
+        String[] selectArgs = {Long.toString(today.getTime().getTime())};
+        Cursor cursor = getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, null);
 
+        FragmentManager fMan = this.getSupportFragmentManager();
+
+        ((DetailFragment)fMan.findFragmentById(R.id.homeFrag)).setCursor(cursor);
+
+        Log.d("detail", (fMan == null) ? "null" : "not null");
     }
 
     @Override

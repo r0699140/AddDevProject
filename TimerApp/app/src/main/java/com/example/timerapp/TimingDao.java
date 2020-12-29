@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/*
 @Dao
 public interface TimingDao {
     @Query("SELECT * FROM timing")
@@ -33,3 +34,4 @@ public interface TimingDao {
     @Delete
     void delete(Timing timing);
 }
+*/

@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+        android:theme="@style/MainTheme">
         <activity
             android:name=".DayDetailActivity"
             android:label="@string/title_activity_detail"
@@ -43,6 +43,10 @@
             </intent-filter>
         </activity>
         <service android:name=".ChronoService" />
+        <provider
+            android:authorities="com.example.timerapp"
+            android:name=".TimingContent"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -11,6 +11,8 @@ import androidx.room.Room;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -22,14 +24,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import static com.example.timerapp.TimingContract.TimingEntry.COLUMN_NAME_DATE;
+import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
+import static com.example.timerapp.TimingContract.TimingEntry.TIMING_ID;
+
 public class DayDetailActivity extends AppCompatActivity {
-    private RecyclerView recyclerView;
-    private RecyclerView.Adapter mAdapter;
-    private RecyclerView.LayoutManager layoutManager;
-
-    private AppDatabase mDb;
-    private TimingDao timingDao;
-
     private Date date;
 
     @Override
@@ -37,51 +36,23 @@ public class DayDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_day_detail);
 
-        Toolbar toolbar = (Toolbar)findViewById(R.id.my_toolbar);
+        Toolbar toolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
 
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        recyclerView = (RecyclerView)findViewById(R.id.detailView);
-        recyclerView.setHasFixedSize(true);
-
-        layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-
-        mAdapter = new DetailAdaptor();
-
-        mDb = (AppDatabase) AppDatabase.getDatabase(getApplicationContext());
-        timingDao = mDb.userDao();
-
-        Calendar today = Calendar.getInstance();
-
-        Intent intent = getIntent();
-        if(intent.hasExtra("date")) {
-            date = new Date(intent.getLongExtra("date", 0));
-            today.setTime(date);
-        }
-
-        timingDao.findByDate(today.getTime()).observe(this, new Observer<List<Timing>>() {
-            @Override
-            public void onChanged(@Nullable List<Timing> timings) {
-                ((DetailAdaptor)mAdapter).setDataset(timings);
-            }
-        });
-
-        recyclerView.setAdapter(mAdapter);
     }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.history_menu, menu);
+        //getMenuInflater().inflate(R.menu.history_menu, menu);
         return true;
     }
 
+    /*
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent intent;
         if (item.getItemId() == R.id.action_delete) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(true);
@@ -91,7 +62,8 @@ public class DayDetailActivity extends AppCompatActivity {
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            new DeleteAsync(timingDao).execute();
+                            String[] args = { Long.toString(date.getTime()) };
+                            getContentResolver().delete(CONTENT_URI, "date = ?", args);
                             finish();
                         }
                     });
@@ -108,19 +80,5 @@ public class DayDetailActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
-    private class DeleteAsync extends AsyncTask<Void, Void, Void> {
-
-        TimingDao mAsyncTimingDao;
-
-        DeleteAsync(TimingDao dao) {
-            this.mAsyncTimingDao = dao;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            mAsyncTimingDao.deleteByDate(date);
-            return null;
-        }
-    }
+    */
 }

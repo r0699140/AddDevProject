@@ -16,15 +16,15 @@ import java.util.Calendar;
 import java.util.List;
 
 public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHolder> {
-    private List<Timing> mDataset;
+    private List<Timer> mDataset;
 
-    public DetailAdaptor(List<Timing> myDataset) {
+    public DetailAdaptor(List<Timer> myDataset) {
         mDataset = myDataset;
     }
 
     public DetailAdaptor() {}
 
-    public void setDataset(List<Timing> dataset){
+    public void setDataset(List<Timer> dataset){
         mDataset = dataset;
         notifyDataSetChanged();
     }
@@ -52,7 +52,6 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
         View view = LayoutInflater.from(context).inflate(R.layout.timeritem, parent, false);
 
         return new MyViewHolder(view);
-
     }
 
     @SuppressLint("SetTextI18n")
@@ -77,7 +76,7 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
 
         String startTime = timeFormat.format(mDataset.get(position).startTime);
 
-        holder.dateLbl.setText(startDate);
+        //holder.dateLbl.setText(startDate);
 
         holder.startLbl.setText(startTime);
         holder.stopLbl.setText(endTime);

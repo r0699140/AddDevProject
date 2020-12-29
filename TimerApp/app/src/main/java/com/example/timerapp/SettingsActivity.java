@@ -1,8 +1,10 @@
 package com.example.timerapp;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,6 +23,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -43,14 +47,14 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener{
-        TimingDao timingDao;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            AppDatabase mDb = (AppDatabase) AppDatabase.getDatabase(this.getContext());
-            timingDao = mDb.userDao();
 
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
+            final TimingDBHelper dbHelper = new TimingDBHelper(this.getContext());
+            final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
             Preference fillBtn = findPreference(getString(R.string.fill_db_key));
             if(fillBtn != null){
@@ -80,7 +84,22 @@ public class SettingsActivity extends AppCompatActivity {
                                             date.add(Calendar.HOUR_OF_DAY, duration/60);
                                             date.add(Calendar.MINUTE, duration%60);
 
-                                            new InsertAsync(timingDao).execute(new Timing(duration, prevDate.getTime(), date.getTime()));
+                                            // Get start of end date
+                                            Calendar c = (Calendar) date.clone();
+
+                                            c.set(Calendar.HOUR_OF_DAY, 0);
+                                            c.set(Calendar.MINUTE, 0);
+                                            c.set(Calendar.SECOND, 0);
+                                            c.set(Calendar.MILLISECOND, 0);
+
+                                            //new InsertAsync(timingDao).execute(new Timing(duration, prevDate.getTime(), date.getTime()));
+                                            ContentValues newValues = new ContentValues();
+                                            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, duration);
+                                            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, prevDate.getTime().getTime());
+                                            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, date.getTime().getTime());
+                                            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
+
+                                            db.insert(TimingContract.TimingEntry.TABLE_NAME, null, newValues);
 
                                             duration = new Random().nextInt(30)+10;
                                             date.add(Calendar.HOUR_OF_DAY, duration/60);
@@ -106,7 +125,21 @@ public class SettingsActivity extends AppCompatActivity {
                                                 date.add(Calendar.HOUR_OF_DAY, duration/60);
                                                 date.add(Calendar.MINUTE, duration%60);
 
-                                                new InsertAsync(timingDao).execute(new Timing(duration, prevDate.getTime(), date.getTime()));
+                                                // Get start of end date
+                                                Calendar c = (Calendar) date.clone();
+
+                                                c.set(Calendar.HOUR_OF_DAY, 0);
+                                                c.set(Calendar.MINUTE, 0);
+                                                c.set(Calendar.SECOND, 0);
+                                                c.set(Calendar.MILLISECOND, 0);
+
+                                                ContentValues newValues = new ContentValues();
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, duration);
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, prevDate.getTime().getTime());
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, date.getTime().getTime());
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
+
+                                                getContext().getContentResolver().insert(CONTENT_URI, newValues);
 
                                                 duration = new Random().nextInt(30)+10;
                                                 date.add(Calendar.HOUR_OF_DAY, duration/60);
@@ -143,7 +176,9 @@ public class SettingsActivity extends AppCompatActivity {
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        new DeleteAsync(timingDao).execute();
+                                        //db.close();
+                                        //getContext().deleteDatabase(TimingDBHelper.DATABASE_NAME);
+                                        getContext().getContentResolver().delete(CONTENT_URI, null, null);
                                     }
                                 });
                         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -228,35 +263,5 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
     }
-
-    private static class InsertAsync extends AsyncTask<Timing, Void, Void> {
-        TimingDao mAsyncTimingDao;
-
-        InsertAsync(TimingDao dao) {
-            this.mAsyncTimingDao = dao;
-        }
-
-        @Override
-        protected Void doInBackground(Timing... timings) {
-            mAsyncTimingDao.insertAll(timings);
-            return null;
-        }
-    }
-
-    private static class DeleteAsync extends AsyncTask<Void, Void, Void> {
-
-        TimingDao mAsyncTimingDao;
-
-        DeleteAsync(TimingDao dao) {
-            this.mAsyncTimingDao = dao;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            mAsyncTimingDao.deleteTimings();
-            return null;
-        }
-    }
-
 
 }

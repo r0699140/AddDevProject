@@ -4,13 +4,16 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -23,6 +26,8 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
+
 public class ChronoService extends Service {
     public static final String ServiceTime = "SetChronoService";
 
@@ -31,8 +36,6 @@ public class ChronoService extends Service {
     private long pausedOn;
     private boolean running;
     private Date startDate;
-
-    private TimingDao timingDao;
 
     private Timer updateNotification;
     private TimerTask updateTask;
@@ -44,8 +47,20 @@ public class ChronoService extends Service {
         pauseTime = 0;
         startDate = null;
 
+        /*
         AppDatabase mDb = (AppDatabase) AppDatabase.getDatabase(getApplicationContext());
         timingDao = mDb.userDao();
+
+                                                        ContentValues newValues = new ContentValues();
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, duration);
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, prevDate.getTime().getTime());
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, date.getTime().getTime());
+                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
+
+                                                db.insert(TimingContract.TimingEntry.TABLE_NAME, null, newValues);
+*/
+        TimingDBHelper dbHelper = new TimingDBHelper(getApplicationContext());
+        final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         IntentFilter filter = new IntentFilter("com.example.timerapp.GETTIME");
         filter.addAction("com.example.timerapp.PAUSE");
@@ -217,8 +232,24 @@ public class ChronoService extends Service {
 
         int minPassed = (int)((SystemClock.elapsedRealtime() - startTime)/60000);
 
-        if(minPassed > 0)
-            new InsertAsync(timingDao).execute(new Timing(minPassed, startDate, new Date()));
+
+        if(minPassed > 0){
+            Calendar c = Calendar.getInstance();
+
+            c.set(Calendar.HOUR_OF_DAY, 0);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
+
+            ContentValues newValues = new ContentValues();
+            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, minPassed);
+            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, startDate.getTime());
+            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, new Date().getTime());
+
+            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
+
+            getContentResolver().insert(CONTENT_URI, newValues);
+        }
 
         stopForeground(true);
         stopSelf();
@@ -240,21 +271,6 @@ public class ChronoService extends Service {
         updateNotification.purge();
 
         unregisterReceiver(broadcastReceiver);
-    }
-
-    private static class InsertAsync extends AsyncTask<Timing, Void, Void> {
-
-        TimingDao mAsyncTimingDao;
-
-        InsertAsync(TimingDao dao) {
-            this.mAsyncTimingDao = dao;
-        }
-
-        @Override
-        protected Void doInBackground(Timing... timings) {
-            mAsyncTimingDao.insertAll(timings);
-            return null;
-        }
     }
 }
 
