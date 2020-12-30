@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
@@ -18,18 +17,19 @@ import android.widget.Chronometer;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
+import com.example.timerapp.Service.ChronoMeterReceiver;
+import com.example.timerapp.Service.ChronoService;
+import com.example.timerapp.Fragments.DetailFragment;
+import com.example.timerapp.R;
+import com.example.timerapp.Database.TimingContract;
+
 import java.util.Calendar;
-import java.util.Date;
 
-import static com.example.timerapp.HistoryActivity.mMasterDetail;
-import static com.example.timerapp.TimingContract.TimingEntry.COLUMN_NAME_DATE;
-import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
+import static com.example.timerapp.Activities.HistoryActivity.mMasterDetail;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_DATE;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -60,13 +60,20 @@ public class MainActivity extends AppCompatActivity {
         today.set(Calendar.MILLISECOND, 0);
 
         String[] selectArgs = {Long.toString(today.getTime().getTime())};
+
         Cursor cursor = getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, null);
 
+        int duration = 0;
+        while(cursor.moveToNext()){
+            duration += cursor.getInt(cursor.getColumnIndexOrThrow(TimingContract.TimingEntry.COLUMN_NAME_DURATION));
+        }
+        cursor.moveToFirst();
+
         FragmentManager fMan = this.getSupportFragmentManager();
-
-        ((DetailFragment)fMan.findFragmentById(R.id.homeFrag)).setCursor(cursor);
-
-        Log.d("detail", (fMan == null) ? "null" : "not null");
+        DetailFragment frag = ((DetailFragment)fMan.findFragmentById(R.id.homeFrag));
+        frag.setCursor(cursor);
+        frag.setDate(today.getTime().getTime(), duration);
+        frag.displayDate();
     }
 
     @Override
@@ -92,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, ChronoService.class);
         serviceIntent.putExtra(ChronoService.ServiceTime, chronometer.getBase());
         ContextCompat.startForegroundService(this, serviceIntent);
+        Log.d("startServiceChrono", String.valueOf(chronometer.getBase()));
     }
 
     @Override

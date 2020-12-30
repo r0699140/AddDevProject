@@ -1,9 +1,9 @@
-package com.example.timerapp;
+package com.example.timerapp.Database;
 import java.util.Date;
 
 public class GroupedTiming {
-    int totalDuration;
-    Date date;
+    public int totalDuration;
+    public Date date;
 
     public GroupedTiming(int totalDuration, Date date){
         this.totalDuration = totalDuration;

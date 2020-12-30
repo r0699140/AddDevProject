@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Database;
 
 import android.content.ContentProvider;
 import android.content.ContentUris;
@@ -13,11 +13,11 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
-import static com.example.timerapp.TimingContract.TimingEntry.TIMING_PATH;
-import static com.example.timerapp.TimingContract.TimingEntry.ALL_TIMING;
-import static com.example.timerapp.TimingContract.TimingEntry.TIMING_GROUP;
-import static com.example.timerapp.TimingContract.TimingEntry.TIMING_ID;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.TIMING_PATH;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.ALL_TIMING;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.TIMING_GROUP;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.TIMING_ID;
 
 public class TimingContent extends ContentProvider {
     private TimingDBHelper mdbHelper;
@@ -50,7 +50,6 @@ public class TimingContent extends ContentProvider {
 
         switch (match){
             case ALL_TIMING:
-            case TIMING_ID:
                 data = db.query(TimingContract.TimingEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, extraString);
                 break;
             case TIMING_GROUP:

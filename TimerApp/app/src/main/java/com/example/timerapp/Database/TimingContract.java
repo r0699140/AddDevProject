@@ -1,10 +1,9 @@
-package com.example.timerapp;
+package com.example.timerapp.Database;
 
-import android.content.UriMatcher;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
-import static com.example.timerapp.TimingContent.BASE_CONTENT_URI;
+import static com.example.timerapp.Database.TimingContent.BASE_CONTENT_URI;
 
 public class TimingContract {
     private TimingContract(){}

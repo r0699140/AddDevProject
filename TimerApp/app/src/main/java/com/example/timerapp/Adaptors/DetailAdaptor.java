@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Adaptors;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,9 +10,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.timerapp.Database.Timer;
+import com.example.timerapp.R;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHolder> {
@@ -30,7 +31,6 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
         public TextView timeLbl;
         public TextView dateLbl;
         public TextView startLbl;

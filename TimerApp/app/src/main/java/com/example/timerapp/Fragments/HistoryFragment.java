@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Fragments;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -15,12 +15,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.timerapp.Activities.DayDetailActivity;
+import com.example.timerapp.Adaptors.DayAdaptor;
+import com.example.timerapp.Database.GroupedTiming;
+import com.example.timerapp.R;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
-import static com.example.timerapp.HistoryActivity.mMasterDetail;
-import static com.example.timerapp.TimingContract.TimingEntry.COLUMN_NAME_DATE;
-import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
+import static com.example.timerapp.Activities.HistoryActivity.mMasterDetail;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_DATE;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
 
 public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClickListener {
 
@@ -70,6 +77,10 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
             int duration = cursor.getInt(0);
             Date date = new Date(cursor.getLong(1));
             days.add(new GroupedTiming(duration, date));
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EE dd/MM/yyyy", Locale.getDefault());
+            String dateStr = dateFormat.format(date);
+            Log.d("history", dateStr + " - " + duration);
         }
 
         cursor.close();
@@ -79,10 +90,12 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
     @Override
     public void onListItemClick(int clickedItemIndex) {
         Date date = adapter.getDataset(clickedItemIndex).date;
+        int duration = adapter.getDataset(clickedItemIndex).totalDuration;
 
         if(!mMasterDetail){
             Intent intent = new Intent(getContext(), DayDetailActivity.class);
             intent.putExtra("date", date.getTime());
+            intent.putExtra("duration", duration);
             startActivity(intent);
         }else{
             FragmentManager fMan = getActivity().getSupportFragmentManager();
@@ -92,6 +105,7 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
             Cursor cursor = getActivity().getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, null);
 
             dFrag.setCursor(cursor);
+            dFrag.setDate(date.getTime(), duration);
 
             fMan.beginTransaction()
                     .replace(R.id.dayFrag, dFrag)

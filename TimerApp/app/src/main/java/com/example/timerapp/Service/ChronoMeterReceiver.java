@@ -1,12 +1,12 @@
-package com.example.timerapp;
+package com.example.timerapp.Service;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
-import android.widget.Toast;
 
-import java.util.Date;
+import com.example.timerapp.Activities.MainActivity;
+
 import java.util.Objects;
 
 public class ChronoMeterReceiver extends BroadcastReceiver {

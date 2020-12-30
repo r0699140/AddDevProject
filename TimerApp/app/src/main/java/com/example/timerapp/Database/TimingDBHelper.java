@@ -1,9 +1,9 @@
-package com.example.timerapp;
+package com.example.timerapp.Database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import com.example.timerapp.TimingContract.*;
+import com.example.timerapp.Database.TimingContract.*;
 
 import androidx.annotation.Nullable;
 

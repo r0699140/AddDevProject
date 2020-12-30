@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Adaptors;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,19 +10,18 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.timerapp.Database.GroupedTiming;
+import com.example.timerapp.R;
+
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class DayAdaptor extends RecyclerView.Adapter<DayAdaptor.MyViewHolder> {
     private List<GroupedTiming> mDataset;
     final private ListItemClickListener mOnClickListener;
 
     public DayAdaptor(ListItemClickListener mOnClickListener) {
-        this.mOnClickListener = mOnClickListener;
-    }
-
-    public DayAdaptor(List<GroupedTiming> dataset, ListItemClickListener mOnClickListener) {
-        mDataset = dataset;
         this.mOnClickListener = mOnClickListener;
     }
 
@@ -64,7 +63,7 @@ public class DayAdaptor extends RecyclerView.Adapter<DayAdaptor.MyViewHolder> {
 
         holder.timeLbl.setText(strHours + ":" + strMinutes);
 
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("EE dd/MM/yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EE dd/MM/yyyy", Locale.getDefault());
 
         String date = dateFormat.format(mDataset.get(position).date);
         holder.dateLbl.setText(date);

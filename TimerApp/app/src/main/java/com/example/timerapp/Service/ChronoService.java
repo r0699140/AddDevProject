@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Service;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -10,15 +10,18 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.SystemClock;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.preference.PreferenceManager;
+
+import com.example.timerapp.Activities.MainActivity;
+import com.example.timerapp.App;
+import com.example.timerapp.Database.TimingContract;
+import com.example.timerapp.Database.TimingDBHelper;
+import com.example.timerapp.R;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -26,7 +29,7 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.example.timerapp.TimingContract.TimingEntry.CONTENT_URI;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
 
 public class ChronoService extends Service {
     public static final String ServiceTime = "SetChronoService";
@@ -47,18 +50,6 @@ public class ChronoService extends Service {
         pauseTime = 0;
         startDate = null;
 
-        /*
-        AppDatabase mDb = (AppDatabase) AppDatabase.getDatabase(getApplicationContext());
-        timingDao = mDb.userDao();
-
-                                                        ContentValues newValues = new ContentValues();
-                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, duration);
-                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, prevDate.getTime().getTime());
-                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, date.getTime().getTime());
-                                                newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
-
-                                                db.insert(TimingContract.TimingEntry.TABLE_NAME, null, newValues);
-*/
         TimingDBHelper dbHelper = new TimingDBHelper(getApplicationContext());
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
@@ -235,7 +226,6 @@ public class ChronoService extends Service {
 
         if(minPassed > 0){
             Calendar c = Calendar.getInstance();
-
             c.set(Calendar.HOUR_OF_DAY, 0);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
@@ -245,7 +235,6 @@ public class ChronoService extends Service {
             newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, minPassed);
             newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, startDate.getTime());
             newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, new Date().getTime());
-
             newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
 
             getContentResolver().insert(CONTENT_URI, newValues);
