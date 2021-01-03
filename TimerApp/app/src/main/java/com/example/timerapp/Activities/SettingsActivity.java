@@ -1,9 +1,10 @@
-package com.example.timerapp;
+package com.example.timerapp.Activities;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -14,13 +15,19 @@ import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
-import androidx.preference.PreferenceScreen;
 
+import com.example.timerapp.R;
+import com.example.timerapp.Database.TimingContract;
+import com.example.timerapp.Database.TimingDBHelper;
+
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -42,15 +49,46 @@ public class SettingsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
+    public static ContentValues randTime(Calendar endDate){
+        Calendar startDate = (Calendar) endDate.clone();
+
+        int duration = new Random().nextInt(240)+20;
+        startDate.add(Calendar.HOUR_OF_DAY, -duration/60);
+        startDate.add(Calendar.MINUTE, -duration%60);
+
+        // Get date
+        Calendar date = (Calendar) endDate.clone();
+        date.set(Calendar.HOUR_OF_DAY, 0);
+        date.set(Calendar.MINUTE, 0);
+        date.set(Calendar.SECOND, 0);
+        date.set(Calendar.MILLISECOND, 0);
+
+        ContentValues newValues = new ContentValues();
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, duration);
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, startDate.getTime().getTime());
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, endDate.getTime().getTime());
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, date.getTime().getTime());
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EE dd/MM/yyyy", Locale.getDefault());
+        String dateStr = dateFormat.format(date.getTime());
+
+        Log.d("setting", duration + " " + dateStr);
+
+        //Put end date at start
+        endDate.add(Calendar.HOUR_OF_DAY, -duration/60);
+        endDate.add(Calendar.MINUTE, -duration%60);
+        return newValues;
+    }
+
     public static class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener{
-        TimingDao timingDao;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            AppDatabase mDb = (AppDatabase) AppDatabase.getDatabase(this.getContext());
-            timingDao = mDb.userDao();
 
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
+            final TimingDBHelper dbHelper = new TimingDBHelper(this.getContext());
+            final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
             Preference fillBtn = findPreference(getString(R.string.fill_db_key));
             if(fillBtn != null){
@@ -68,57 +106,25 @@ public class SettingsActivity extends AppCompatActivity {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         Calendar date = Calendar.getInstance();
-                                        Calendar prevDate = Calendar.getInstance();
                                         int duration = 0;
 
-                                        //Add records for today
-                                        for(int j = 0; j < 4; j++){
-                                            prevDate = (Calendar)date.clone();
+                                        for(int i = 0; i < 100; i++){
+                                            //Add records for day
+                                            ContentValues newValues = randTime(date);
 
-                                            duration = new Random().nextInt(240)+20;
+                                            db.insert(TimingContract.TimingEntry.TABLE_NAME, null, newValues);
 
-                                            date.add(Calendar.HOUR_OF_DAY, duration/60);
-                                            date.add(Calendar.MINUTE, duration%60);
+                                            duration = new Random().nextInt(240)+10;
+                                            date.add(Calendar.HOUR_OF_DAY, -duration/60);
+                                            date.add(Calendar.MINUTE, -duration%60);
 
-                                            new InsertAsync(timingDao).execute(new Timing(duration, prevDate.getTime(), date.getTime()));
-
-                                            duration = new Random().nextInt(30)+10;
-                                            date.add(Calendar.HOUR_OF_DAY, duration/60);
-                                            date.add(Calendar.MINUTE, duration%60);
-                                        }
-
-                                        date = Calendar.getInstance();
-                                        date.set(Calendar.MONTH, 1);
-                                        date.set(Calendar.DAY_OF_MONTH, 0);
-                                        date.add(Calendar.HOUR_OF_DAY, 0);
-                                        date.add(Calendar.MINUTE, 0);
-
-                                        //Add records on random days
-                                        for(int i = 0; i < 6; i++){
-                                            date.add(Calendar.MONTH, new Random().nextInt(2));
-                                            date.add(Calendar.DAY_OF_MONTH, new Random().nextInt(15));
-
-                                            for(int j = 0; j < 4; j++){
-                                                prevDate = (Calendar)date.clone();
-
-                                                duration = new Random().nextInt(240)+20;
-
-                                                date.add(Calendar.HOUR_OF_DAY, duration/60);
-                                                date.add(Calendar.MINUTE, duration%60);
-
-                                                new InsertAsync(timingDao).execute(new Timing(duration, prevDate.getTime(), date.getTime()));
-
-                                                duration = new Random().nextInt(30)+10;
-                                                date.add(Calendar.HOUR_OF_DAY, duration/60);
-                                                date.add(Calendar.MINUTE, duration%60);
-                                            }
+                                            date.add(Calendar.DAY_OF_MONTH, (int) - Math.floor(new Random().nextInt(11) / 10));
                                         }
                                     }
                                 });
                         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
+                            public void onClick(DialogInterface dialog, int which) {}
                         });
 
                         AlertDialog dialog = builder.create();
@@ -143,7 +149,9 @@ public class SettingsActivity extends AppCompatActivity {
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        new DeleteAsync(timingDao).execute();
+                                        //db.close();
+                                        //getContext().deleteDatabase(TimingDBHelper.DATABASE_NAME);
+                                        getContext().getContentResolver().delete(CONTENT_URI, null, null);
                                     }
                                 });
                         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -228,35 +236,5 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
     }
-
-    private static class InsertAsync extends AsyncTask<Timing, Void, Void> {
-        TimingDao mAsyncTimingDao;
-
-        InsertAsync(TimingDao dao) {
-            this.mAsyncTimingDao = dao;
-        }
-
-        @Override
-        protected Void doInBackground(Timing... timings) {
-            mAsyncTimingDao.insertAll(timings);
-            return null;
-        }
-    }
-
-    private static class DeleteAsync extends AsyncTask<Void, Void, Void> {
-
-        TimingDao mAsyncTimingDao;
-
-        DeleteAsync(TimingDao dao) {
-            this.mAsyncTimingDao = dao;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            mAsyncTimingDao.deleteTimings();
-            return null;
-        }
-    }
-
 
 }

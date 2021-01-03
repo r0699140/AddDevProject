@@ -21,6 +21,4 @@
     <string name="title_fill_dp">Fill Database</string>
     <string name="fill_dp_summary">Generates random data to test out app</string>
     <string name="fill_db_key">FillDPKey</string>
-
-
 </resources>

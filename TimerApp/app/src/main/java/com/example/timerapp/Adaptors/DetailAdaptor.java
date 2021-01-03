@@ -1,4 +1,4 @@
-package com.example.timerapp;
+package com.example.timerapp.Adaptors;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,27 +10,27 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.timerapp.Database.Timer;
+import com.example.timerapp.R;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHolder> {
-    private List<Timing> mDataset;
+    private List<Timer> mDataset;
 
-    public DetailAdaptor(List<Timing> myDataset) {
+    public DetailAdaptor(List<Timer> myDataset) {
         mDataset = myDataset;
     }
 
     public DetailAdaptor() {}
 
-    public void setDataset(List<Timing> dataset){
+    public void setDataset(List<Timer> dataset){
         mDataset = dataset;
         notifyDataSetChanged();
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
         public TextView timeLbl;
         public TextView dateLbl;
         public TextView startLbl;
@@ -52,7 +52,6 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
         View view = LayoutInflater.from(context).inflate(R.layout.timeritem, parent, false);
 
         return new MyViewHolder(view);
-
     }
 
     @SuppressLint("SetTextI18n")
@@ -77,7 +76,7 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
 
         String startTime = timeFormat.format(mDataset.get(position).startTime);
 
-        holder.dateLbl.setText(startDate);
+        //holder.dateLbl.setText(startDate);
 
         holder.startLbl.setText(startTime);
         holder.stopLbl.setText(endTime);
@@ -88,6 +87,15 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
         if(mDataset == null)
             return 0;
         return mDataset.size();
+    }
+
+    public void remove(int index){
+        mDataset.remove(index);
+        notifyDataSetChanged();
+    }
+
+    public Timer getItem(int index){
+        return mDataset.get(index);
     }
 
 
