@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.timerapp.Database.GroupedTiming;
+import com.example.timerapp.Database.Timer;
 import com.example.timerapp.R;
 
 import java.text.SimpleDateFormat;
@@ -74,6 +75,15 @@ public class DayAdaptor extends RecyclerView.Adapter<DayAdaptor.MyViewHolder> {
         if(mDataset == null)
             return 0;
         return mDataset.size();
+    }
+
+    public void remove(int index){
+        mDataset.remove(index);
+        notifyDataSetChanged();
+    }
+
+    public GroupedTiming getItem(int index){
+        return mDataset.get(index);
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {

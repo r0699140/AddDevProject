@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,8 +25,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import static android.provider.BaseColumns._ID;
 import static com.example.timerapp.Activities.HistoryActivity.mMasterDetail;
 import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_DATE;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_START;
 import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
 
 public class DetailFragment extends Fragment {
@@ -38,6 +42,10 @@ public class DetailFragment extends Fragment {
 
     private String mDateStr;
     private String mDurationStr;
+
+    private Long mDate;
+    private int mDuration;
+
 
     public DetailFragment() {}
 
@@ -66,6 +74,7 @@ public class DetailFragment extends Fragment {
         recyclerView.setAdapter(mAdapter);
         mDateDisplay = mRootView.findViewById(R.id.dateDisplay);
         mTimeDisplay = mRootView.findViewById(R.id.timeDisplay);
+        new ItemTouchHelper(itemTouch).attachToRecyclerView(recyclerView);
 
         if(!mMasterDetail){
             Intent intent = getActivity().getIntent();
@@ -77,7 +86,7 @@ public class DetailFragment extends Fragment {
 
                 String[] selectArgs = { Long.toString(date) };
 
-                mCursor = getActivity().getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, null);
+                mCursor = getActivity().getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, COLUMN_NAME_START + " DESC");
             }
         }
 
@@ -110,6 +119,8 @@ public class DetailFragment extends Fragment {
     }
 
     public void setDate(Long date, int duration){
+        mDate = date;
+        mDuration = duration;
         SimpleDateFormat dateFormat = new SimpleDateFormat("EE dd/MM/yyyy", Locale.getDefault());
         mDateStr = dateFormat.format(date);
 
@@ -125,4 +136,24 @@ public class DetailFragment extends Fragment {
         mTimeDisplay.setText(mDurationStr);
         mDateDisplay.setText(mDateStr);
     }
+
+    ItemTouchHelper.SimpleCallback itemTouch = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            final Timer item = mAdapter.getItem(viewHolder.getAdapterPosition());
+            mDuration -= item.duration;
+            setDate(mDate, mDuration);
+            displayDate();
+
+            String[] selectArgs = {String.valueOf(item.uid)};
+            getContext().getContentResolver().delete(CONTENT_URI, _ID + " = ?", selectArgs);
+
+            mAdapter.remove(viewHolder.getAdapterPosition());
+        }
+    };
 }

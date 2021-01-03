@@ -3,12 +3,11 @@ package com.example.timerapp.Activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,29 +15,53 @@ import android.widget.Button;
 import android.widget.Chronometer;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 
-import com.example.timerapp.Service.ChronoMeterReceiver;
-import com.example.timerapp.Service.ChronoService;
+import com.example.timerapp.Classes.ChronoControl;
 import com.example.timerapp.Fragments.DetailFragment;
 import com.example.timerapp.R;
 import com.example.timerapp.Database.TimingContract;
+import com.example.timerapp.Service.ChronoService;
 
 import java.util.Calendar;
+import java.util.Objects;
 
 import static com.example.timerapp.Activities.HistoryActivity.mMasterDetail;
 import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_DATE;
+import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_START;
 import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
 
 
 public class MainActivity extends AppCompatActivity {
     private Chronometer chronometer;
     private Button toggle_btn;
+    private Button stop_btn;
     private boolean running;
     private long pauseOffset;
 
-    BroadcastReceiver chronoServiceReceiver;
+    private ChronoControl chronoControl;
+
+    private final BroadcastReceiver mChronoServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            long time = intent.getLongExtra(ChronoService.TimeIntent, SystemClock.elapsedRealtime());
+
+            switch (Objects.requireNonNull(intent.getAction())) {
+                case ChronoService.SetIntent:
+                    startChrono(time);
+                    break;
+                case ChronoService.PauseTimeIntent:
+                    setPaused(time);
+                    break;
+                case ChronoService.StopChronoIntent:
+                    stopChrono();
+                    break;
+                case ChronoService.SaveIntent:
+                    loadDay();
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +74,13 @@ public class MainActivity extends AppCompatActivity {
 
         chronometer = findViewById(R.id.chronometer);
         toggle_btn = findViewById(R.id.toggle_btn);
-        chronoServiceReceiver = new ChronoMeterReceiver();
+        stop_btn = findViewById(R.id.stop_btn);
+        chronoControl = ChronoControl.getInstance();
 
+        loadDay();
+    }
+
+    public void loadDay(){
         Calendar today = Calendar.getInstance();
         today.set(Calendar.HOUR_OF_DAY, 0);
         today.set(Calendar.MINUTE, 0);
@@ -61,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
         String[] selectArgs = {Long.toString(today.getTime().getTime())};
 
-        Cursor cursor = getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, null);
+        Cursor cursor = getContentResolver().query(CONTENT_URI, null, COLUMN_NAME_DATE + " = ?", selectArgs, COLUMN_NAME_START + " DESC");
 
         int duration = 0;
         while(cursor.moveToNext()){
@@ -74,32 +102,7 @@ public class MainActivity extends AppCompatActivity {
         frag.setCursor(cursor);
         frag.setDate(today.getTime().getTime(), duration);
         frag.displayDate();
-    }
-
-    @Override
-    protected void onStart() {
-        IntentFilter filter = new IntentFilter("com.example.timerapp.SETTIME");
-        filter.addAction("com.example.timerapp.PAUSETIME");
-        filter.addAction("com.example.timerapp.STOP_CHRONO");
-        registerReceiver(chronoServiceReceiver, filter);
-
-        Intent sendIntent = new Intent("com.example.timerapp.GETTIME");
-        sendBroadcast(sendIntent);
-
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        unregisterReceiver(chronoServiceReceiver);
-    }
-
-    private void startServiceChrono(){
-        Intent serviceIntent = new Intent(this, ChronoService.class);
-        serviceIntent.putExtra(ChronoService.ServiceTime, chronometer.getBase());
-        ContextCompat.startForegroundService(this, serviceIntent);
-        Log.d("startServiceChrono", String.valueOf(chronometer.getBase()));
+        frag.readData();
     }
 
     @Override
@@ -127,6 +130,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        chronoControl.setReceiver(this, mChronoServiceReceiver);
+
+        chronoControl.getTime(this);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(mChronoServiceReceiver);
+
+        super.onPause();
+    }
+
     public void startChrono(){
         startChrono(SystemClock.elapsedRealtime() - pauseOffset);
     }
@@ -137,18 +156,15 @@ public class MainActivity extends AppCompatActivity {
 
         chronometer.start();
         chronometer.setBase(time);
-        startServiceChrono();
+
+        chronoControl.startChronoService(time, this);
         running = true;
     }
 
-    public void updatePaused(long time){
+    public void setPaused(long time){
         chronometer.setBase(time);
-        toggle_btn.setText(R.string.btn_start);
-        chronometer.stop();
-        pauseOffset = SystemClock.elapsedRealtime() - chronometer.getBase();
         findViewById(R.id.stop_btn).setEnabled(true);
-
-        running = false;
+        pauseChrono();
     }
 
     public void pauseChrono(){
@@ -156,8 +172,7 @@ public class MainActivity extends AppCompatActivity {
         chronometer.stop();
         pauseOffset = SystemClock.elapsedRealtime() - chronometer.getBase();
 
-        Intent sendIntent = new Intent("com.example.timerapp.PAUSE");
-        sendBroadcast(sendIntent);
+        chronoControl.pause(this);
         running = false;
     }
 
@@ -180,10 +195,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void stopChrono(View v){
-        Intent sendIntent = new Intent("com.example.timerapp.STOP");
+        chronoControl.stop(this);
         v.setEnabled(false);
-        sendBroadcast(sendIntent);
-
         stopChrono();
     }
 }

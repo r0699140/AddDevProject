@@ -11,7 +11,7 @@ import com.example.timerapp.R;
 import java.util.Date;
 import java.util.Objects;
 
-public class DayDetailActivity extends AppCompatActivity {
+public class DayDetailActivity extends FabActivity {
     private Date date;
 
     @Override
@@ -24,6 +24,8 @@ public class DayDetailActivity extends AppCompatActivity {
 
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        setupFab();
     }
 
 

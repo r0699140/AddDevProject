@@ -42,6 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginTop="16dp"
+            android:background="@drawable/button"
             android:onClick="toggleChrono"
             android:text="@string/btn_start"
             app:layout_constraintEnd_toEndOf="parent"
@@ -53,6 +54,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:background="@drawable/button"
             android:enabled="false"
             android:onClick="stopChrono"
             android:text="@string/btn_stop"
@@ -70,7 +72,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/constraintLayout"
         app:layout_constraintTop_toBottomOf="@+id/my_toolbar" />
-
-    <include layout="@layout/fab" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

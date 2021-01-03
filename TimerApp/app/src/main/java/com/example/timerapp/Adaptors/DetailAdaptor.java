@@ -89,5 +89,14 @@ public class DetailAdaptor extends RecyclerView.Adapter<DetailAdaptor.MyViewHold
         return mDataset.size();
     }
 
+    public void remove(int index){
+        mDataset.remove(index);
+        notifyDataSetChanged();
+    }
+
+    public Timer getItem(int index){
+        return mDataset.get(index);
+    }
+
 
 }

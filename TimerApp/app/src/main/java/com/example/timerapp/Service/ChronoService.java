@@ -33,6 +33,17 @@ import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_U
 
 public class ChronoService extends Service {
     public static final String ServiceTime = "SetChronoService";
+    public static final String TimeIntent = "com.example.timerapp.TIME";
+    public static final String SetIntent = "com.example.timerapp.SETTIME";
+    public static final String PauseTimeIntent = "com.example.timerapp.PAUSETIME";
+    public static final String StopChronoIntent = "com.example.timerapp.STOP_CHRONO";
+    public static final String StopIntent = "com.example.timerapp.STOP";
+    public static final String GetIntent = "com.example.timerapp.GETTIME";
+    public static final String PauseAllIntent = "com.example.timerapp.PAUSEALL";
+    public static final String StartAllIntent = "com.example.timerapp.STARTALL";
+    public static final String StopAllIntent = "com.example.timerapp.STOPALL";
+    public static final String PauseIntent = "com.example.timerapp.PAUSE";
+    public static final String SaveIntent = "com.example.timerapp.SAVE";
 
     private long startTime;
     private long pauseTime;
@@ -53,12 +64,12 @@ public class ChronoService extends Service {
         TimingDBHelper dbHelper = new TimingDBHelper(getApplicationContext());
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-        IntentFilter filter = new IntentFilter("com.example.timerapp.GETTIME");
-        filter.addAction("com.example.timerapp.PAUSE");
-        filter.addAction("com.example.timerapp.STOP");
-        filter.addAction("com.example.timerapp.PAUSEALL");
-        filter.addAction("com.example.timerapp.STARTALL");
-        filter.addAction("com.example.timerapp.STOPALL");
+        IntentFilter filter = new IntentFilter(GetIntent);
+        filter.addAction(PauseIntent);
+        filter.addAction(StopIntent);
+        filter.addAction(PauseAllIntent);
+        filter.addAction(StartAllIntent);
+        filter.addAction(StopAllIntent);
         registerReceiver(broadcastReceiver, filter);
 
         updateNotification = new Timer();
@@ -75,8 +86,8 @@ public class ChronoService extends Service {
 
                     if (prefMin > 0 && minutesPassed >= prefMin) {
                         Intent sendIntent = new Intent();
-                        sendIntent.setAction("com.example.timerapp.SETTIME");
-                        sendIntent.putExtra("com.example.timerapp.TIME", startTime);
+                        sendIntent.setAction(SetIntent);
+                        sendIntent.putExtra(TimeIntent, startTime);
                         sendBroadcast(sendIntent);
 
                         startChrono();
@@ -109,44 +120,44 @@ public class ChronoService extends Service {
             Intent sendIntent = new Intent();
 
             switch (Objects.requireNonNull(intent.getAction())) {
-                case "com.example.timerapp.GETTIME":
+                case GetIntent:
                     if (running) {
-                        sendIntent.setAction("com.example.timerapp.SETTIME");
+                        sendIntent.setAction(SetIntent);
                     } else {
-                        sendIntent.setAction("com.example.timerapp.PAUSETIME");
+                        sendIntent.setAction(PauseTimeIntent);
                         startTime = SystemClock.elapsedRealtime() - pauseTime;
                     }
 
-                    sendIntent.putExtra("com.example.timerapp.TIME", startTime);
+                    sendIntent.putExtra(TimeIntent, startTime);
                     sendBroadcast(sendIntent);
 
                     break;
-                case "com.example.timerapp.PAUSE":
+                case PauseIntent:
                     pauseChrono();
                     break;
-                case "com.example.timerapp.STARTALL":
+                case StartAllIntent:
                     startChrono();
 
                     setNotification(timeToString(SystemClock.elapsedRealtime() - startTime));
 
-                    sendIntent.setAction("com.example.timerapp.SETTIME");
-                    sendIntent.putExtra("com.example.timerapp.TIME", startTime);
+                    sendIntent.setAction(SetIntent);
+                    sendIntent.putExtra(TimeIntent, startTime);
                     sendBroadcast(sendIntent);
                     break;
-                case "com.example.timerapp.PAUSEALL":
+                case PauseAllIntent:
                     pauseChrono();
 
                     setNotification(timeToString(SystemClock.elapsedRealtime() - startTime));
 
-                    sendIntent.setAction("com.example.timerapp.PAUSETIME");
+                    sendIntent.setAction(PauseTimeIntent);
                     startTime = SystemClock.elapsedRealtime() - pauseTime;
-                    sendIntent.putExtra("com.example.timerapp.TIME", startTime);
+                    sendIntent.putExtra(TimeIntent, startTime);
                     sendBroadcast(sendIntent);
                     break;
-                case "com.example.timerapp.STOPALL":
-                    sendIntent.setAction("com.example.timerapp.STOP_CHRONO");
+                case StopAllIntent:
+                    sendIntent.setAction(StopChronoIntent);
                     sendBroadcast(sendIntent);
-                case "com.example.timerapp.STOP":
+                case StopIntent:
                     stopChrono();
                     break;
             }
@@ -171,18 +182,18 @@ public class ChronoService extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0, notificationIntent, 0);
 
         String toggleBtn;
-        Intent toggleIntent = new Intent();
+        Intent toggleIntent;
         if(running){
             toggleBtn = getString(R.string.btn_pause);
-            toggleIntent = new Intent("com.example.timerapp.PAUSEALL");
+            toggleIntent = new Intent(PauseAllIntent);
         }else{
             toggleBtn = getString(R.string.btn_start);
-            toggleIntent = new Intent("com.example.timerapp.STARTALL");
+            toggleIntent = new Intent(StartAllIntent);
         }
 
         PendingIntent toggleAction = PendingIntent.getBroadcast(this, 0, toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Intent stopIntent = new Intent("com.example.timerapp.STOPALL");
+        Intent stopIntent = new Intent(StopAllIntent);
         PendingIntent stopAction = PendingIntent.getBroadcast(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this, App.CHANNEL_ID)
@@ -221,24 +232,23 @@ public class ChronoService extends Service {
         if(!running)
             startTime = SystemClock.elapsedRealtime() - pauseTime;
 
-        int minPassed = (int)((SystemClock.elapsedRealtime() - startTime)/60000);
+        int minPassed = (int) Math.ceil(((SystemClock.elapsedRealtime() - startTime)/60000.0));
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
 
+        ContentValues newValues = new ContentValues();
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, minPassed);
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, startDate.getTime());
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, new Date().getTime());
+        newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
 
-        if(minPassed > 0){
-            Calendar c = Calendar.getInstance();
-            c.set(Calendar.HOUR_OF_DAY, 0);
-            c.set(Calendar.MINUTE, 0);
-            c.set(Calendar.SECOND, 0);
-            c.set(Calendar.MILLISECOND, 0);
+        getContentResolver().insert(CONTENT_URI, newValues);
 
-            ContentValues newValues = new ContentValues();
-            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DURATION, minPassed);
-            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_START, startDate.getTime());
-            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_END, new Date().getTime());
-            newValues.put(TimingContract.TimingEntry.COLUMN_NAME_DATE, c.getTime().getTime());
-
-            getContentResolver().insert(CONTENT_URI, newValues);
-        }
+        Intent sendIntent = new Intent(ChronoService.SaveIntent);
+        sendBroadcast(sendIntent);
 
         stopForeground(true);
         stopSelf();

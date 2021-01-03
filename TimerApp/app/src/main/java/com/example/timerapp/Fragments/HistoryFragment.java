@@ -5,8 +5,10 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +20,7 @@ import android.view.ViewGroup;
 import com.example.timerapp.Activities.DayDetailActivity;
 import com.example.timerapp.Adaptors.DayAdaptor;
 import com.example.timerapp.Database.GroupedTiming;
+import com.example.timerapp.Database.Timer;
 import com.example.timerapp.R;
 
 import java.text.SimpleDateFormat;
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import static android.provider.BaseColumns._ID;
 import static com.example.timerapp.Activities.HistoryActivity.mMasterDetail;
 import static com.example.timerapp.Database.TimingContract.TimingEntry.COLUMN_NAME_DATE;
 import static com.example.timerapp.Database.TimingContract.TimingEntry.CONTENT_URI;
@@ -38,7 +42,7 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
         super.onCreate(savedInstanceState);
     }
 
-    private DayAdaptor adapter;
+    private DayAdaptor mAdapter;
     private RecyclerView.LayoutManager layoutManager;
 
     @Override
@@ -50,13 +54,14 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true);
 
-        adapter = new DayAdaptor( this);
-        recyclerView.setAdapter(adapter);
+        mAdapter = new DayAdaptor( this);
+        recyclerView.setAdapter(mAdapter);
 
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
+        new ItemTouchHelper(itemTouch).attachToRecyclerView(recyclerView);
 
-        fillAdapter(adapter);
+        fillAdapter(mAdapter);
 
         return rootView;
     }
@@ -64,7 +69,7 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
     @Override
     public void onResume() {
         super.onResume();
-        fillAdapter(adapter);
+        fillAdapter(mAdapter);
     }
 
     void fillAdapter(DayAdaptor adapter){
@@ -89,8 +94,8 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
 
     @Override
     public void onListItemClick(int clickedItemIndex) {
-        Date date = adapter.getDataset(clickedItemIndex).date;
-        int duration = adapter.getDataset(clickedItemIndex).totalDuration;
+        Date date = mAdapter.getDataset(clickedItemIndex).date;
+        int duration = mAdapter.getDataset(clickedItemIndex).totalDuration;
 
         if(!mMasterDetail){
             Intent intent = new Intent(getContext(), DayDetailActivity.class);
@@ -112,5 +117,22 @@ public class HistoryFragment extends Fragment implements DayAdaptor.ListItemClic
                     .commit();
         }
     }
+
+    ItemTouchHelper.SimpleCallback itemTouch = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            final GroupedTiming item = mAdapter.getItem(viewHolder.getAdapterPosition());
+
+            String[] selectArgs = {String.valueOf(item.date.getTime())};
+            getContext().getContentResolver().delete(CONTENT_URI, COLUMN_NAME_DATE + " = ?", selectArgs);
+
+            mAdapter.remove(viewHolder.getAdapterPosition());
+        }
+    };
 
 }
